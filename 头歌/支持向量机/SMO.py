@@ -1,3 +1,4 @@
+
 #encoding=utf8
 import numpy as np
 class smo:
@@ -91,20 +92,28 @@ class smo:
             L = max(0, self.alpha[j] - self.alpha[i])
             H = min(self.C, self.C + self.alpha[j] - self.alpha[i])
         # 计算alpha2的上下界
-        if self.alpha[j] > H:
-            alpha_j_new = H
-        elif self.alpha[j] < L:
-            alpha_j_new = L
+        
+        E1 = self.E[i]
+        E2 = self.E[j]
+        # eta=K11+K22-2K12
+        eta = self.kernel(self.X[i], self.X[j]) + self.kernel(
+                self.X[j],
+                self.X[j]) - 2 * self.kernel(self.X[i], self.X[j])
+        if eta <= 0:
+            return 1
+        a = self.alpha[j] + self.Y[j] * (E2 - E1) / eta
+        if a>H:
+            alpha_j_new=H
+        elif a<L:
+            alpha_j_new=L
         else:
-            alpha_j_new = self.alpha[j]
-        # 如果变化不大，就不更新了
-        if abs(alpha_j_new - self.alpha[j]) < 0.00001:
-            return 0
-        # 更新alpha1
-        alpha_i_new = self.alpha[i] + self.Y[i] * self.Y[j] * (self.alpha[j] - alpha_j_new)
-        # 更新b
-        b1_new = -self.E[i] - self.Y[i] * self.kernel(self.X[i], self.X[i]) * (alpha_i_new - self.alpha[i]) - self.Y[j] * self.kernel(self.X[j], self.X[i]) * (alpha_j_new - self.alpha[j]) + self.b
-        b2_new = -self.E[j] - self.Y[i] * self.kernel(self.X[i], self.X[j]) * (alpha_i_new - self.alpha[i]) - self.Y[j] * self.kernel(self.X[j], self.X[j]) * (alpha_j_new - self.alpha[j]) + self.b
+            alpha_j_new=a
+        alpha_i_new = self.alpha[i] + self.Y[i] * self.Y[j] * (
+                self.alpha[j] - alpha_j_new)
+        b1_new = -E1 - self.Y[i] * self.kernel(self.X[i], self.X[i]) * (
+alpha_i_new - self.alpha[i]) - self.Y[j] * self.kernel(self.X[j],self.X[i]) * (alpha_j_new - self.alpha[j]) + self.b
+        b2_new = -E2 - self.Y[i] * self.kernel(self.X[i], self.X[j]) * (
+alpha_i_new - self.alpha[i]) - self.Y[j] * self.kernel(self.X[j],self.X[j]) * (alpha_j_new - self.alpha[j]) + self.b
         if 0 < alpha_i_new < self.C:
             b_new = b1_new
         elif 0 < alpha_j_new < self.C:
@@ -148,24 +157,4 @@ class smo:
 
     #********* End *********# 
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         
